@@ -11,4 +11,7 @@ namespace qlm
     // Concept to ensure number of bits is a power of two and ≥ 64
     template<int N>
     concept ValidSIMDWidth = (N >= 64) && ((N & (N - 1)) == 0);
+
+    template<int N>
+    concept ValidMaskWidth = (N >= 0) && ((N & (N - 1)) == 0);
 }

@@ -11,8 +11,6 @@ namespace qlm
         public:
             static constexpr int simd_width = simd_size;
             static constexpr int num_elements = simd_width / (sizeof(data_type) * 8);
-
-        public:
             data_type data[num_elements];
 
         public:
@@ -22,12 +20,6 @@ namespace qlm
             {
                 for (int i = 0; i < num_elements; i++)
                     data[i] = val;
-            }
-
-            explicit VecRegister(const data_type* arr) 
-            {
-                for (int i = 0; i < num_elements; i++)
-                    data[i] = arr[i];
             }
 
             VecRegister(const VecRegister& other) 
