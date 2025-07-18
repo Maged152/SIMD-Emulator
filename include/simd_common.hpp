@@ -14,4 +14,7 @@ namespace qlm
 
     template<int N>
     concept ValidMaskWidth = (N >= 0) && ((N & (N - 1)) == 0);
+
+    template<typename T, int simd_size, int num_bits>
+    concept ValidSIMDFunction = ValidSIMDWidth<simd_size> && (num_bits ==  (simd_size / (sizeof(T) * 8)));
 }
