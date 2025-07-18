@@ -16,7 +16,7 @@ namespace qlm
         public:
             VecRegister() = default;
 
-            explicit VecRegister(const data_type val) 
+            VecRegister(const data_type& val) 
             {
                 for (int i = 0; i < num_elements; i++)
                     data[i] = val;
