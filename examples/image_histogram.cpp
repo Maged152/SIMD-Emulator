@@ -89,7 +89,7 @@ void simd_histogram(const Image& img, int32_t* hist)
         for (int i = 0; i < iter_inner_loop; i++) 
         {
             // load input vector
-            qlm::VecRegister<int32_t, simd_size> vec = qlm::vec::CastLoad<simd_size, int32_t>(img.PtrAt(i * elements_per_vector, y));
+            qlm::VecRegister<int32_t, simd_size> vec = qlm::vec::WidenLoad<simd_size, int32_t>(img.PtrAt(i * elements_per_vector, y));
 
             // prepare addresses for histogram
             vec = qlm::vec::Mul(val, vec);
@@ -110,7 +110,7 @@ void simd_histogram(const Image& img, int32_t* hist)
         for (int y = 0; y < img.Height(); y++) 
         {
             // load input vector for the tail
-            qlm::VecRegister<int32_t, simd_size> vec = qlm::vec::CastLoad<simd_size, int32_t>(img.PtrAt(iter_inner_loop * elements_per_vector, y), mask);
+            qlm::VecRegister<int32_t, simd_size> vec = qlm::vec::WidenLoad<simd_size, int32_t>(img.PtrAt(iter_inner_loop * elements_per_vector, y), mask);
 
             // prepare addresses for histogram
             vec = qlm::vec::Mul(val, vec);
