@@ -69,12 +69,13 @@ void simd_histogram(const Image& img, int32_t* hist)
 
     // initialize histogram with zeros, it's multiple of 2 so no tail is possible
     for (int y = 0; y < 256; y++)
-        for (int x = 0; x < 256; x++) 
+    {
+        for (int x = 0; x < 256; x += elements_per_vector) 
         {
-            //const qlm::VecRegister<int32_t, simd_size> zero{0};
-            // qlm::vec::Store(&hist_buffer[i * elements_per_vector], zero);
-            hist_buffer[y * 256 + x] = 0;
+            const qlm::VecRegister<int32_t, simd_size> zero{0};
+            qlm::vec::Store(&hist_buffer[y * 256 + x], zero);
         }
+    }
 
     // calculate histogram of input image
     const int iter_inner_loop = img.Width() / elements_per_vector;
@@ -124,25 +125,14 @@ void simd_histogram(const Image& img, int32_t* hist)
     }
     
     // store results back to the histogram
-    for (int i = 0; i < 256; i++)
+    for (int y = 0; y < 256; y++)
     {
-        // load histogram data from the buffer
-        // qlm::VecRegister<int32_t, simd_size> hist_data = qlm::vec::Load<simd_size>(&hist_buffer[i * elements_per_vector]);
-
-        // if (i != 5)
-        // {
-        //     for (int j = 0; j < elements_per_vector; j++)
-        //     {
-        //         if (hist_data[j] != 0)
-        //             std::cout << "Mismatch at bin " << i << " ,element: " << j << ": SIMD=" << hist_data[j] << "\n";
-        //     }
-        // }
-
         // sum up all elements in the vector
-        hist[i] = 0;
-        for (int j = 0; j < 256; j++)
+        hist[y] = 0;
+        for (int x = 0; x < 256; x += elements_per_vector) 
         {
-            hist[i] += hist_buffer[i * 256 + j];
+            qlm::VecRegister<int32_t, simd_size> vec = qlm::vec::Load<simd_size>(&hist_buffer[y * 256 + x]);
+            hist[y] += qlm::vec::ReduceAdd(vec);
         }
     }
 
