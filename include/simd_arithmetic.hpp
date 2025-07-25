@@ -2,6 +2,7 @@
 
 #include "simd_memory.hpp"
 #include <functional>
+#include <cmath>
 
 
 namespace qlm
@@ -39,6 +40,21 @@ namespace qlm
         VecRegister<T, simd_size> Mul(const VecRegister<T, simd_size>& vec0, const VecRegister<T, simd_size>& vec1, const MaskRegister<MaskSize<T, simd_size>>& mask = MaskRegister<MaskSize<T, simd_size>>(true))
         {
             return Apply(vec0, vec1, mask, std::multiplies<T>());
+        }
+
+        template<int simd_size, Primitive T>
+        requires ValidSIMDWidth<simd_size>
+        VecRegister<T, simd_size> Min(const VecRegister<T, simd_size>& vec0, const VecRegister<T, simd_size>& vec1, const MaskRegister<MaskSize<T, simd_size>>& mask = MaskRegister<MaskSize<T, simd_size>>(true))
+        {
+            return Apply(vec0, vec1, mask, std::min<T>());
+        }
+
+
+       template<int simd_size, Primitive T>
+        requires ValidSIMDWidth<simd_size>
+        VecRegister<T, simd_size> Max(const VecRegister<T, simd_size>& vec0, const VecRegister<T, simd_size>& vec1, const MaskRegister<MaskSize<T, simd_size>>& mask = MaskRegister<MaskSize<T, simd_size>>(true))
+        {
+            return Apply(vec0, vec1, mask, std::max<T>());
         }
     }
 }
