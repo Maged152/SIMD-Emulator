@@ -1,54 +1,9 @@
-#include <iostream>
-#include <random>
-#include <cmath>
 #include "simd_emulator.hpp"
 #include "simd_debug.hpp"
+#include "example_helper.hpp"
 
 // Assuming simd_size is 256 bits
 constexpr int simd_size = 256;
-
-// image class
-class Image {
-private:
-    uint8_t* data;
-    int width;
-    int height;
-public:
-    Image(int width, int height) : width(width), height(height) {
-        data = new uint8_t[width * height];
-    }
-
-    ~Image() {
-        delete[] data;
-    }
-
-    uint8_t& At(int x, int y) 
-    {
-        return data[y * width + x];
-    }
-
-    uint8_t At(int x, int y) const
-    {
-        return data[y * width + x];
-    }
-
-    const uint8_t* PtrAt(int x, int y) const
-    {
-        return &data[y * width + x];
-    }
-
-    int Width() const { return width; }
-    int Height() const { return height; }
-
-    void RandomInit() 
-    {
-        std::mt19937 rng(42);
-        std::uniform_int_distribution<uint8_t> dist(0, 255);
-        for (int y = 0; y < height; y++)
-            for (int x = 0; x <width; x++)
-                this->At(x, y) = x;//dist(rng);
-    }
-};
 
 // Scalar histogram calculation
 void scalar_histogram(const Image& img, int32_t* hist) 
@@ -140,19 +95,6 @@ void simd_histogram(const Image& img, int32_t* hist)
     delete[] hist_buffer;
 }
 
-// Compare histograms
-bool compare_histograms(const int32_t* h1, const int32_t* h2) 
-{
-    bool correct = true;
-    for (int i = 0; i < 256; i++) {
-        if (h1[i] != h2[i]) {
-            std::cout << "Mismatch at bin " << i << ": SIMD=" << h1[i] << ", Scalar=" << h2[i] << "\n";
-            correct = false;
-        }
-    }
-    return correct;
-}
-
 int main() 
 {
     const int width = 1920, height = 1080;
@@ -170,7 +112,7 @@ int main()
     simd_histogram(img, hist_simd);
 
     // Compare results
-    if (compare_histograms(hist_simd, hist_scalar))
+    if (compare_results(hist_simd, hist_scalar, 256))
         std::cout << "All histogram bins match!\n";
     else
         std::cout << "There are mismatches in the histogram results.\n";

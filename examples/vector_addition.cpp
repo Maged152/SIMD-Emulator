@@ -1,20 +1,8 @@
-#include <iostream>
-#include <random>
-#include <cmath>
 #include "simd_emulator.hpp"
+#include "example_helper.hpp"
 
 // Assuming simd_size is 256 bits
 constexpr int simd_size = 256;
-
-void initialize_data(int* data1, int* data2, int size)
-{
-    std::mt19937 rng(42);
-    std::uniform_int_distribution<int> dist(-100, 100);
-    for (int i = 0; i < size; ++i) {
-        data1[i] = dist(rng);
-        data2[i] = dist(rng);
-    }
-}
 
 void scalar_add(const int* data1, const int* data2, int* scalar_sum, int size) 
 {
@@ -59,22 +47,6 @@ void simd_add(const int* data1, const int* data2, int* simd_sum, const int size)
     }
 }
 
-bool compare_results(const int* simd_sum, const int* scalar_sum, int size) 
-{
-    bool correct = true;
-    for (int i = 0; i < size; i++) 
-    {
-        if (simd_sum[i] != scalar_sum[i]) 
-        {
-            correct = false;
-            std::cout << "Mismatch at index " << i << ": SIMD=" << simd_sum[i] << ", Scalar=" << scalar_sum[i] << "\n";
-        }
-    }
-
-    return correct;
-}
-
-
 int main()
 {
     // in/out arrays
@@ -85,7 +57,7 @@ int main()
     int *out_vectorized = new int [arr_size];
 
     // initialize input arrays
-    initialize_data(in0, in1, arr_size);
+    initialize_data(out_scalar, arr_size);
 
     // call scalar and vectorized functions
     scalar_add(in0, in1, out_scalar, arr_size);
