@@ -26,7 +26,6 @@ namespace qlm
             return res;
         }
 
-
         template<int simd_size, Primitive T>
         requires ValidSIMDWidth<simd_size>
         VecRegister<T, simd_size> Add(const VecRegister<T, simd_size>& vec0, const VecRegister<T, simd_size>& vec1, const MaskRegister<MaskSize<T, simd_size>>& mask = MaskRegister<MaskSize<T, simd_size>>(true))
@@ -46,7 +45,10 @@ namespace qlm
         requires ValidSIMDWidth<simd_size>
         VecRegister<T, simd_size> Min(const VecRegister<T, simd_size>& vec0, const VecRegister<T, simd_size>& vec1, const MaskRegister<MaskSize<T, simd_size>>& mask = MaskRegister<MaskSize<T, simd_size>>(true))
         {
-            return Apply(vec0, vec1, mask, std::min<T>());
+            auto Min = [](const T& a, const T& b) -> T {
+                return std::min(a, b);
+            };
+            return Apply(vec0, vec1, mask, Min);
         }
 
 
@@ -54,7 +56,10 @@ namespace qlm
         requires ValidSIMDWidth<simd_size>
         VecRegister<T, simd_size> Max(const VecRegister<T, simd_size>& vec0, const VecRegister<T, simd_size>& vec1, const MaskRegister<MaskSize<T, simd_size>>& mask = MaskRegister<MaskSize<T, simd_size>>(true))
         {
-            return Apply(vec0, vec1, mask, std::max<T>());
+            auto Max = [](const T& a, const T& b) -> T {
+                return std::max(a, b);
+            };
+            return Apply(vec0, vec1, mask, Max);
         }
     }
 }

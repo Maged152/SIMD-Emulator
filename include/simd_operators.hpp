@@ -3,23 +3,8 @@
 #include "vector_register.hpp"
 #include "mask_register.hpp"
 
+#include "simd_arithmetic.hpp"
 
-namespace qlm
-{
-    namespace vec
-    {
-        template< int simd_size, qlm::Primitive T>
-        requires qlm::ValidSIMDWidth<simd_size>
-        qlm::VecRegister<T, simd_size> Ramp()
-        {
-            qlm::VecRegister<T, simd_size> vec;
-            for (int i = 0; i < vec.num_elements; i++)
-                vec[i] = i;
-
-            return vec;
-        }
-    }
-}
 
 /*
     compare operators for VecRegister
@@ -42,4 +27,33 @@ auto operator<(const qlm::VecRegister<T, simd_size>& lhs, const T& rhs)
 {
     qlm::VecRegister<T, simd_size> vec{rhs};
     return lhs < vec;
+}
+
+// Arithmetic operators using simd_arithmetic.hpp
+template<int simd_size, qlm::Primitive T>
+requires qlm::ValidSIMDWidth<simd_size>
+qlm::VecRegister<T, simd_size> operator+(const qlm::VecRegister<T, simd_size>& lhs, const qlm::VecRegister<T, simd_size>& rhs)
+{
+    return qlm::vec::Add(lhs, rhs);
+}
+
+template<int simd_size, qlm::Primitive T>
+requires qlm::ValidSIMDWidth<simd_size>
+qlm::VecRegister<T, simd_size> operator+(const qlm::VecRegister<T, simd_size>& lhs, const T& rhs)
+{
+    return qlm::vec::Add(lhs, qlm::VecRegister<T, simd_size>(rhs));
+}
+
+template<int simd_size, qlm::Primitive T>
+requires qlm::ValidSIMDWidth<simd_size>
+qlm::VecRegister<T, simd_size> operator*(const qlm::VecRegister<T, simd_size>& lhs, const qlm::VecRegister<T, simd_size>& rhs)
+{
+    return qlm::vec::Mul(lhs, rhs);
+}
+
+template<int simd_size, qlm::Primitive T>
+requires qlm::ValidSIMDWidth<simd_size>
+qlm::VecRegister<T, simd_size> operator*(const qlm::VecRegister<T, simd_size>& lhs, const T& rhs)
+{
+    return qlm::vec::Mul(lhs, qlm::VecRegister<T, simd_size>(rhs));
 }

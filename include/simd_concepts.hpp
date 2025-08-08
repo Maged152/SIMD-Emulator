@@ -4,7 +4,7 @@
 
 namespace qlm
 {
-    // helper functions
+    // concepts
     template<typename T, int simd_size>
     constexpr int MaskSize = simd_size / (8 * sizeof(T));
 
@@ -20,5 +20,5 @@ namespace qlm
     concept ValidMaskWidth = (N >= 0) && ((N & (N - 1)) == 0);
 
     template<typename T, int simd_size, int num_bits>
-    concept ValidSIMDFunction = ValidSIMDWidth<simd_size> && (num_bits ==  MaskSize<T, simd_size>); 
+    concept ValidSIMDFunction = ValidSIMDWidth<simd_size> && (num_bits ==  MaskSize<T, simd_size>);
 }

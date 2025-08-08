@@ -1,5 +1,5 @@
 #pragma once
-#include "simd_common.hpp"
+#include "simd_concepts.hpp"
 
 namespace qlm
 {
