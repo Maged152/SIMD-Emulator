@@ -61,7 +61,8 @@ template<int simd_size, qlm::Primitive T>
 requires qlm::ValidSIMDWidth<simd_size>
 qlm::VecRegister<T, simd_size> operator+(const qlm::VecRegister<T, simd_size>& lhs, const T& rhs)
 {
-    return qlm::vec::Add(lhs, qlm::VecRegister<T, simd_size>(rhs));
+    qlm::VecRegister<T, simd_size> vec{rhs};
+    return lhs + vec;
 }
 
 template<int simd_size, qlm::Primitive T>
@@ -75,7 +76,8 @@ template<int simd_size, qlm::Primitive T>
 requires qlm::ValidSIMDWidth<simd_size>
 qlm::VecRegister<T, simd_size> operator*(const qlm::VecRegister<T, simd_size>& lhs, const T& rhs)
 {
-    return qlm::vec::Mul(lhs, qlm::VecRegister<T, simd_size>(rhs));
+    qlm::VecRegister<T, simd_size> vec{rhs};
+    return lhs * vec;
 }
 
 template<int simd_size, qlm::Primitive T>
@@ -89,9 +91,9 @@ template<int simd_size, qlm::Primitive T>
 requires qlm::ValidSIMDWidth<simd_size>
 qlm::VecRegister<T, simd_size> operator/(const qlm::VecRegister<T, simd_size>& lhs, const T& rhs)
 {
-    return qlm::vec::Div(lhs, qlm::VecRegister<T, simd_size>(rhs));
+    qlm::VecRegister<T, simd_size> vec{rhs};
+    return lhs / vec;
 }
-
 
 template<int simd_size, qlm::Primitive T>
 requires qlm::ValidSIMDWidth<simd_size>
@@ -105,5 +107,6 @@ template<int simd_size, qlm::Primitive T>
 requires qlm::ValidSIMDWidth<simd_size>
 qlm::VecRegister<T, simd_size> operator%(const qlm::VecRegister<T, simd_size>& lhs, const T& rhs)
 {
-    return qlm::vec::Mod(lhs, qlm::VecRegister<T, simd_size>(rhs));
+    qlm::VecRegister<T, simd_size> vec{rhs};
+    return lhs % vec;
 }
