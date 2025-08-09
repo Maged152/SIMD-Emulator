@@ -43,28 +43,25 @@ void CompareAndSwap(qlm::VecRegister<int32_t, simd_size>& min_vec, qlm::VecRegis
     max_vec = qlm::vec::Max(temp, max_vec);
 }
 
-void simd_bitonic_sort_stage0(int32_t* arr, const int size) 
+void simd_bitonic_sort_stageN(int32_t* arr, const int size, const qlm::VecRegister<int32_t, simd_size>& indices_0, const qlm::VecRegister<int32_t, simd_size>& indices_1) 
 {
     constexpr int elements_per_vector = simd_size / (8 * sizeof(int32_t));
     const int loop_inc = elements_per_vector * 2;
     const int tail = size % loop_inc;
     const int iter_inner_loop = size - tail;
-    
-    const auto even_indices = qlm::vec::Ramp<simd_size, int32_t>() * 2;
-    const auto odd_indices = even_indices + 1;
 
     for(int i = 0; i < iter_inner_loop; i += loop_inc) 
     {
-        // Gather even and odd elements
-        auto vec_even = qlm::vec::Gather<simd_size, int32_t>(&arr[i], even_indices);
-        auto vec_odd = qlm::vec::Gather<simd_size, int32_t>(&arr[i], odd_indices);
+        // Gather elements
+        auto min_vec = qlm::vec::Gather<simd_size, int32_t>(&arr[i], indices_0);
+        auto max_vec = qlm::vec::Gather<simd_size, int32_t>(&arr[i], indices_1);
 
         // Compare and swap
-        CompareAndSwap(vec_even, vec_odd);
+        CompareAndSwap(min_vec, max_vec);
 
         // Scatter the results back to the array
-        qlm::vec::Scatter<simd_size, int32_t>(&arr[i], vec_even, even_indices);
-        qlm::vec::Scatter<simd_size, int32_t>(&arr[i], vec_odd, odd_indices);
+        qlm::vec::Scatter<simd_size, int32_t>(&arr[i], min_vec, indices_0);
+        qlm::vec::Scatter<simd_size, int32_t>(&arr[i], max_vec, indices_1);
     }
     if (tail > 0) 
     {
@@ -72,17 +69,37 @@ void simd_bitonic_sort_stage0(int32_t* arr, const int size)
         const qlm::MaskRegister<elements_per_vector> mask = qlm::vec::Ramp<simd_size, int32_t>() < (tail / 2);
 
         // Gather tail elements with mask
-        auto vec_even = qlm::vec::Gather<simd_size, int32_t>(&arr[iter_inner_loop], even_indices, mask);
-        auto vec_odd = qlm::vec::Gather<simd_size, int32_t>(&arr[iter_inner_loop], odd_indices, mask);
+        auto min_vec = qlm::vec::Gather<simd_size, int32_t>(&arr[iter_inner_loop], indices_0, mask);
+        auto max_vec = qlm::vec::Gather<simd_size, int32_t>(&arr[iter_inner_loop], indices_1, mask);
 
         // Compare and swap
-        CompareAndSwap(vec_even, vec_odd);
+        CompareAndSwap(min_vec, max_vec);
 
         // Scatter results with mask
-        qlm::vec::Scatter<simd_size, int32_t>(&arr[iter_inner_loop], vec_even, even_indices, mask);
-        qlm::vec::Scatter<simd_size, int32_t>(&arr[iter_inner_loop], vec_odd, odd_indices, mask);
+        qlm::vec::Scatter<simd_size, int32_t>(&arr[iter_inner_loop], min_vec, indices_0, mask);
+        qlm::vec::Scatter<simd_size, int32_t>(&arr[iter_inner_loop], max_vec, indices_1, mask);
     }
 }
+
+void simd_bitonic_sort_stage0(int32_t* arr, const int size) 
+{   
+    const auto even_indices = qlm::vec::Ramp<simd_size, int32_t>() * 2;
+    const auto odd_indices = even_indices + 1;
+
+    simd_bitonic_sort_stageN(arr, size, even_indices, odd_indices);
+}
+
+void simd_bitonic_sort_stage1(int32_t* arr, const int size) 
+{   
+    const auto base_indices = (qlm::vec::Ramp<simd_size, int32_t>() / 2) *4; // 0 0 4 4 8 8 12 12 ...
+    const auto indicies_mask = (qlm::vec::Ramp<simd_size, int32_t>() % 2) == 0; // 0 1 0 1 0 1 0 1 ...
+    const auto indices_0 = qlm::vec::Select(base_indices, base_indices + 1, indicies_mask); // 0 1 4 5 8 9 12 13 ...
+    const auto indices_1 = qlm::vec::Select(indices_0 + 3, indices_0 + 1, indicies_mask); // 3 2 7 6 11 10 15 14 ...
+
+    simd_bitonic_sort_stageN(arr, size, indices_0, indices_1);
+    simd_bitonic_sort_stage0(arr, size);
+}
+
 void simd_bitonic_sort(int32_t* arr, int size) {
     const int num_stages = std::log2(size);
 }
@@ -144,6 +161,7 @@ int main() {
 
     // Run only stage 0
     simd_bitonic_sort_stage0(arr, array_size);
+    simd_bitonic_sort_stage1(arr, array_size);
 
     // Print result after stage 0
     std::cout << "After stage 0:\n";

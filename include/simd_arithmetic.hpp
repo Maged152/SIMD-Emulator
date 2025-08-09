@@ -34,12 +34,27 @@ namespace qlm
         }
 
 
-       template<int simd_size, Primitive T>
+        template<int simd_size, Primitive T>
         requires ValidSIMDWidth<simd_size>
         VecRegister<T, simd_size> Mul(const VecRegister<T, simd_size>& vec0, const VecRegister<T, simd_size>& vec1, const MaskRegister<MaskSize<T, simd_size>>& mask = MaskRegister<MaskSize<T, simd_size>>(true))
         {
             return Apply(vec0, vec1, mask, std::multiplies<T>());
         }
+
+        template<int simd_size, Primitive T>
+        requires ValidSIMDWidth<simd_size>
+        VecRegister<T, simd_size> Div(const VecRegister<T, simd_size>& vec0, const VecRegister<T, simd_size>& vec1, const MaskRegister<MaskSize<T, simd_size>>& mask = MaskRegister<MaskSize<T, simd_size>>(true))
+        {
+            return Apply(vec0, vec1, mask, std::divides<T>());
+        }
+        
+        template<int simd_size, Primitive T>
+        requires ValidSIMDWidth<simd_size>
+        VecRegister<T, simd_size> Mod(const VecRegister<T, simd_size>& vec0, const VecRegister<T, simd_size>& vec1, const MaskRegister<MaskSize<T, simd_size>>& mask = MaskRegister<MaskSize<T, simd_size>>(true))
+        {
+            return Apply(vec0, vec1, mask, std::modulus<T>());
+        }
+
 
         template<int simd_size, Primitive T>
         requires ValidSIMDWidth<simd_size>
@@ -52,7 +67,7 @@ namespace qlm
         }
 
 
-       template<int simd_size, Primitive T>
+        template<int simd_size, Primitive T>
         requires ValidSIMDWidth<simd_size>
         VecRegister<T, simd_size> Max(const VecRegister<T, simd_size>& vec0, const VecRegister<T, simd_size>& vec1, const MaskRegister<MaskSize<T, simd_size>>& mask = MaskRegister<MaskSize<T, simd_size>>(true))
         {
