@@ -67,6 +67,21 @@ qlm::VecRegister<T, simd_size> operator+(const qlm::VecRegister<T, simd_size>& l
 
 template<int simd_size, qlm::Primitive T>
 requires qlm::ValidSIMDWidth<simd_size>
+qlm::VecRegister<T, simd_size> operator-(const qlm::VecRegister<T, simd_size>& lhs, const qlm::VecRegister<T, simd_size>& rhs)
+{
+    return qlm::vec::Sub(lhs, rhs);
+}
+
+template<int simd_size, qlm::Primitive T>
+requires qlm::ValidSIMDWidth<simd_size>
+qlm::VecRegister<T, simd_size> operator-(const qlm::VecRegister<T, simd_size>& lhs, const T& rhs)
+{
+    qlm::VecRegister<T, simd_size> vec{rhs};
+    return lhs - vec;
+}
+
+template<int simd_size, qlm::Primitive T>
+requires qlm::ValidSIMDWidth<simd_size>
 qlm::VecRegister<T, simd_size> operator*(const qlm::VecRegister<T, simd_size>& lhs, const qlm::VecRegister<T, simd_size>& rhs)
 {
     return qlm::vec::Mul(lhs, rhs);

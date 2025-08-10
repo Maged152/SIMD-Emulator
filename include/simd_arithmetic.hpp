@@ -33,6 +33,13 @@ namespace qlm
             return Apply(vec0, vec1, mask, std::plus<T>());
         }
 
+        template<int simd_size, Primitive T>
+        requires ValidSIMDWidth<simd_size>
+        VecRegister<T, simd_size> Sub(const VecRegister<T, simd_size>& vec0, const VecRegister<T, simd_size>& vec1, const MaskRegister<MaskSize<T, simd_size>>& mask = MaskRegister<MaskSize<T, simd_size>>(true))
+        {
+            return Apply(vec0, vec1, mask, std::minus<T>());
+        }
+
 
         template<int simd_size, Primitive T>
         requires ValidSIMDWidth<simd_size>
