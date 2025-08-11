@@ -53,6 +53,25 @@ void CompareAndSwap(qlm::VecRegister<int32_t, simd_size>& min_vec, qlm::VecRegis
     max_vec = qlm::vec::Max(temp, max_vec);
 }
 
+template<int butterfly_size>
+void simd_bitonic_sort_butterfly(qlm::VecRegister<int32_t, simd_size>& min_indices, qlm::VecRegister<int32_t, simd_size>&max_indices, int stage_group_size) 
+{
+    const auto half_butterfly_size = butterfly_size / 2;
+    const auto ramp = qlm::vec::Ramp<simd_size, int32_t>();
+    const auto group_base = (ramp / half_butterfly_size) * butterfly_size;
+    const auto within_pair = ramp % half_butterfly_size;
+    
+    const auto indices_0 = group_base + within_pair;
+    const auto indices_1 = indices_0 + half_butterfly_size;
+
+    const auto mask = (qlm::vec::Ramp<simd_size, int32_t>() % stage_group_size) < (stage_group_size / 2);
+
+    // Select indices based on the mask
+    min_indices = qlm::vec::Select(mask, indices_0, indices_1);
+    max_indices = qlm::vec::Select(mask, indices_1, indices_0);
+}
+
+
 void simd_bitonic_sort_stageN(int32_t* arr, const int size, const qlm::VecRegister<int32_t, simd_size>& min_indices, const qlm::VecRegister<int32_t, simd_size>& max_indices) 
 {
     constexpr int elements_per_vector = simd_size / (8 * sizeof(int32_t));
@@ -91,56 +110,32 @@ void simd_bitonic_sort_stageN(int32_t* arr, const int size, const qlm::VecRegist
     }
 }
 
-void simd_bitonic_sort_stage0(int32_t* arr, const int size, const int stage_group_size) 
+void simd_bitonic_sort_stage0(int32_t* arr, const int size, int stage_group_size = 2) 
 {
-    // Base indices for even and odd positions
-    const auto even_indices = qlm::vec::Ramp<simd_size, int32_t>() * 2;     // [0,2,4,6,8,10,...]
-    const auto odd_indices = even_indices + 1;                              // [1,3,5,7,9,11,...]
-
-    // Create alternating mask based on stage_group_size
-    // For stage_group_size = 2: [1,0,1,0,1,0,...]
-    // For stage_group_size = 4: [1,1,0,0,1,1,0,0,...]
-    // For stage_group_size = 8: [1,1,1,1,0,0,0,0,...]
-    const auto mask = (qlm::vec::Ramp<simd_size, int32_t>() % stage_group_size) < (stage_group_size / 2);
-
-    // Select indices based on the mask
-    const auto min_indices = qlm::vec::Select(mask, even_indices, odd_indices);
-    const auto max_indices = qlm::vec::Select(mask, odd_indices, even_indices);
+    qlm::VecRegister<int32_t, simd_size> min_indices, max_indices;
+    simd_bitonic_sort_butterfly<2>(min_indices, max_indices, stage_group_size);
 
     simd_bitonic_sort_stageN(arr, size, min_indices, max_indices);
 }
 
-void simd_bitonic_sort_stage1(int32_t* arr, const int size) 
-{   
-    const auto base_indices = (qlm::vec::Ramp<simd_size, int32_t>() / 2) *4; // 0 0 4 4 8 8 12 12 ...
-    const auto indicies_mask = (qlm::vec::Ramp<simd_size, int32_t>() % 2) == 0; // 0 1 0 1 0 1 0 1 ...
-    const auto min_indices = qlm::vec::Select(indicies_mask, base_indices, base_indices + 1); // 0 1 4 5 8 9 12 13 ...
-    const auto max_indices = qlm::vec::Select(indicies_mask, min_indices + 3, min_indices + 1); // 3 2 7 6 11 10 15 14 ...
-
+void simd_bitonic_sort_stage1(int32_t* arr, const int size, int stage_group_size = 4) 
+{
+    qlm::VecRegister<int32_t, simd_size> min_indices, max_indices;
+    simd_bitonic_sort_butterfly<4>(min_indices, max_indices, stage_group_size);
+    
     simd_bitonic_sort_stageN(arr, size, min_indices, max_indices);
-    simd_bitonic_sort_stage0(arr, size, 2);
+    simd_bitonic_sort_stage0(arr, size, stage_group_size);
 }
 
-void simd_bitonic_sort_stage2(int32_t* arr, const int size) 
+void simd_bitonic_sort_stage2(int32_t* arr, const int size, int stage_group_size = 8) 
 {
-    // Block size is 8 elements for this butterfly
-    const auto base_indices = (qlm::vec::Ramp<simd_size, int32_t>() / 4) * 8;  // 0 0 0 0 8 8 8 8 ...
-    const auto inner_offset = qlm::vec::Ramp<simd_size, int32_t>() % 4;        // 0 1 2 3 0 1 2 3 ...
-
-    // Left side = first half ascending
-    const auto min_indices = base_indices + inner_offset;                        // 0 1 2 3 8 9 10 11 ...
-
-    // Right side = second half descending
-    const qlm::VecRegister<int32_t, simd_size> seven{7};
-    const auto max_indices = base_indices + (seven - inner_offset);                   // 7 6 5 4 15 14 13 12 ...
-
-    qlm::vec::Print("Indices 0: ", min_indices);
-    qlm::vec::Print("Indices 1: ", max_indices);
-
+    qlm::VecRegister<int32_t, simd_size> min_indices, max_indices;
+    simd_bitonic_sort_butterfly<8>(min_indices, max_indices, stage_group_size);
+    qlm::vec::Print("min_indices", min_indices);
+    qlm::vec::Print("max_indices", max_indices);
+    
     simd_bitonic_sort_stageN(arr, size, min_indices, max_indices);
-    PrintArray("After stage 2_0", arr, size);
-    simd_bitonic_sort_stage1(arr, size);
-    PrintArray("After stage 1_2", arr, size);
+    simd_bitonic_sort_stage1(arr, size, stage_group_size);
 }
 
 void simd_bitonic_sort(int32_t* arr, int size) {
@@ -178,29 +173,35 @@ int main() {
     int32_t* arr = new int32_t[array_size];
 
     // Initialize with values from the image (left-most column)
-    arr[0] = 10;
-    arr[1] = 20;
-    arr[2] = 5;
-    arr[3] = 9;
-    arr[4] = 3;
-    arr[5] = 8;
-    arr[6] = 12;
-    arr[7] = 14;
-    arr[8] = 90;
-    arr[9] = 0;
-    arr[10] = 60;
-    arr[11] = 40;
-    arr[12] = 23;
-    arr[13] = 35;
-    arr[14] = 95;
-    arr[15] = 18;
+    arr[0] = 49;
+    arr[1] = 61;
+    arr[2] = 25;
+    arr[3] = 77;
+    arr[4] = 62;
+    arr[5] = 93;
+    arr[6] = 36;
+    arr[7] = 74;
+    arr[8] = 68;
+    arr[9] = 18;
+    arr[10] = 67;
+    arr[11] = 44;
+    arr[12] = 87;
+    arr[13] = 88;
+    arr[14] = 26;
+    arr[15] = 79;
 
     // Print initial array
     PrintArray("Initial array", arr, array_size);
 
     // Run only stage 0
-    simd_bitonic_sort_stage0(arr, array_size, 2);
+    simd_bitonic_sort_stage0(arr, array_size);
     PrintArray("After stage 0", arr, array_size);
+    // Run stage 1
+    simd_bitonic_sort_stage1(arr, array_size);
+    PrintArray("After stage 1", arr, array_size);
+    // Run stage 2
+    simd_bitonic_sort_stage2(arr, array_size);
+    PrintArray("After stage 2", arr, array_size);
 
 
     delete[] arr;
