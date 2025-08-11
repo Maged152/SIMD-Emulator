@@ -131,11 +131,18 @@ void simd_bitonic_sort_stage2(int32_t* arr, const int size, int stage_group_size
 {
     qlm::VecRegister<int32_t, simd_size> min_indices, max_indices;
     simd_bitonic_sort_butterfly<8>(min_indices, max_indices, stage_group_size);
-    qlm::vec::Print("min_indices", min_indices);
-    qlm::vec::Print("max_indices", max_indices);
     
     simd_bitonic_sort_stageN(arr, size, min_indices, max_indices);
     simd_bitonic_sort_stage1(arr, size, stage_group_size);
+}
+
+void simd_bitonic_sort_stage3(int32_t* arr, const int size, int stage_group_size = 16) 
+{
+    qlm::VecRegister<int32_t, simd_size> min_indices, max_indices;
+    simd_bitonic_sort_butterfly<16>(min_indices, max_indices, stage_group_size);
+    
+    simd_bitonic_sort_stageN(arr, size, min_indices, max_indices);
+    simd_bitonic_sort_stage2(arr, size, stage_group_size);
 }
 
 void simd_bitonic_sort(int32_t* arr, int size) {
@@ -202,6 +209,9 @@ int main() {
     // Run stage 2
     simd_bitonic_sort_stage2(arr, array_size);
     PrintArray("After stage 2", arr, array_size);
+    // Run stage 3
+    simd_bitonic_sort_stage3(arr, array_size);
+    PrintArray("After stage 3", arr, array_size);
 
 
     delete[] arr;
