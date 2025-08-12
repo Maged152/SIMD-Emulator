@@ -46,6 +46,10 @@ void bitonic_sort_sequence(int32_t* arr, int low, int cnt, bool dir) {
 }
 
 /* SIMD bitonic sort*/
+/*
+    This generic SIMD bitonic sort implementation works only if the vector size is equal or less than the repeating pattern.
+    Bigger sizes will require additional handling to generate the indicies and loop over them 
+*/
 void CompareAndSwap(qlm::VecRegister<int32_t, simd_size>& min_vec, qlm::VecRegister<int32_t, simd_size>&max_vec) 
 {
     const auto temp = min_vec;
@@ -70,7 +74,6 @@ void simd_bitonic_sort_butterfly(qlm::VecRegister<int32_t, simd_size>& min_indic
     min_indices = qlm::vec::Select(mask, indices_0, indices_1);
     max_indices = qlm::vec::Select(mask, indices_1, indices_0);
 }
-
 
 void simd_bitonic_sort_stageN(int32_t* arr, const int size, const qlm::VecRegister<int32_t, simd_size>& min_indices, const qlm::VecRegister<int32_t, simd_size>& max_indices) 
 {
@@ -146,10 +149,13 @@ void simd_bitonic_sort_stage3(int32_t* arr, const int size, int stage_group_size
 }
 
 void simd_bitonic_sort(int32_t* arr, int size) {
-    const int num_stages = std::log2(size);
+    simd_bitonic_sort_stage0(arr, size);
+    simd_bitonic_sort_stage1(arr, size);
+    simd_bitonic_sort_stage2(arr, size);
+    simd_bitonic_sort_stage3(arr, size);
 }
 
-#if 0
+
 int main() {
     constexpr int array_size = 16;
     int32_t* arr_scalar = new int32_t[array_size];
@@ -174,47 +180,3 @@ int main() {
 
     return 0;
 }
-#else
-int main() {
-    constexpr int array_size = 16;
-    int32_t* arr = new int32_t[array_size];
-
-    // Initialize with values from the image (left-most column)
-    arr[0] = 49;
-    arr[1] = 61;
-    arr[2] = 25;
-    arr[3] = 77;
-    arr[4] = 62;
-    arr[5] = 93;
-    arr[6] = 36;
-    arr[7] = 74;
-    arr[8] = 68;
-    arr[9] = 18;
-    arr[10] = 67;
-    arr[11] = 44;
-    arr[12] = 87;
-    arr[13] = 88;
-    arr[14] = 26;
-    arr[15] = 79;
-
-    // Print initial array
-    PrintArray("Initial array", arr, array_size);
-
-    // Run only stage 0
-    simd_bitonic_sort_stage0(arr, array_size);
-    PrintArray("After stage 0", arr, array_size);
-    // Run stage 1
-    simd_bitonic_sort_stage1(arr, array_size);
-    PrintArray("After stage 1", arr, array_size);
-    // Run stage 2
-    simd_bitonic_sort_stage2(arr, array_size);
-    PrintArray("After stage 2", arr, array_size);
-    // Run stage 3
-    simd_bitonic_sort_stage3(arr, array_size);
-    PrintArray("After stage 3", arr, array_size);
-
-
-    delete[] arr;
-    return 0;
-}
-#endif
