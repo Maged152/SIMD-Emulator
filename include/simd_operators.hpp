@@ -2,7 +2,7 @@
 
 #include "vector_register.hpp"
 #include "mask_register.hpp"
-
+#include "simd_bit_wise.hpp"
 #include "simd_arithmetic.hpp"
 
 
@@ -124,4 +124,60 @@ qlm::VecRegister<T, simd_size> operator%(const qlm::VecRegister<T, simd_size>& l
 {
     qlm::VecRegister<T, simd_size> vec{rhs};
     return lhs % vec;
+}
+
+// Bitwise operators
+template<int simd_size, qlm::Primitive T>
+requires qlm::ValidSIMDWidth<simd_size> && std::is_integral_v<T>
+qlm::VecRegister<T, simd_size> operator&(const qlm::VecRegister<T, simd_size>& lhs, const qlm::VecRegister<T, simd_size>& rhs)
+{
+    return qlm::vec::And(lhs, rhs);
+}
+
+template<int simd_size, qlm::Primitive T>
+requires qlm::ValidSIMDWidth<simd_size> && std::is_integral_v<T>
+qlm::VecRegister<T, simd_size> operator&(const qlm::VecRegister<T, simd_size>& lhs, const T& rhs)
+{
+    qlm::VecRegister<T, simd_size> vec{rhs};
+    return lhs & vec;
+}
+
+// Bitwise OR
+template<int simd_size, qlm::Primitive T>
+requires qlm::ValidSIMDWidth<simd_size> && std::is_integral_v<T>
+qlm::VecRegister<T, simd_size> operator|(const qlm::VecRegister<T, simd_size>& lhs, const qlm::VecRegister<T, simd_size>& rhs)
+{
+    return qlm::vec::Or(lhs, rhs);
+}
+
+template<int simd_size, qlm::Primitive T>
+requires qlm::ValidSIMDWidth<simd_size> && std::is_integral_v<T>
+qlm::VecRegister<T, simd_size> operator|(const qlm::VecRegister<T, simd_size>& lhs, const T& rhs)
+{
+    qlm::VecRegister<T, simd_size> vec{rhs};
+    return lhs | vec;
+}
+
+// Bitwise XOR
+template<int simd_size, qlm::Primitive T>
+requires qlm::ValidSIMDWidth<simd_size> && std::is_integral_v<T>
+qlm::VecRegister<T, simd_size> operator^(const qlm::VecRegister<T, simd_size>& lhs, const qlm::VecRegister<T, simd_size>& rhs)
+{
+    return qlm::vec::Xor(lhs, rhs);
+}
+
+template<int simd_size, qlm::Primitive T>
+requires qlm::ValidSIMDWidth<simd_size> && std::is_integral_v<T>
+qlm::VecRegister<T, simd_size> operator^(const qlm::VecRegister<T, simd_size>& lhs, const T& rhs)
+{
+    qlm::VecRegister<T, simd_size> vec{rhs};
+    return lhs ^ vec;
+}
+
+// Bitwise NOT
+template<int simd_size, qlm::Primitive T>
+requires qlm::ValidSIMDWidth<simd_size> && std::is_integral_v<T>
+qlm::VecRegister<T, simd_size> operator~(const qlm::VecRegister<T, simd_size>& lhs)
+{
+    return qlm::vec::Not(lhs);
 }
